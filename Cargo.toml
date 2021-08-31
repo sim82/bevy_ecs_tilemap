@@ -10,7 +10,7 @@ edition = "2018"
 exclude = ["assets/*", "screenshots/*"]
 
 [features]
-default = []
+default = ["ldtk"]
 ldtk = ["anyhow", "ldtk_rust", "serde_json"]
 tiled_map = ["anyhow", "tiled"]
 
@@ -26,5 +26,10 @@ tiled = { version="0.9", default-features=false, optional=true }
 
 [dev-dependencies]
 bevy = { git="https://github.com/bevyengine/bevy", branch ="main", default-features=true }
+#bevy_type_registry = {git="https://github.com/bevyengine/bevy", branch ="main"}
 rand = "0.8"
 env_logger = "0.8"
+serde = { version = "^1", features = ["derive"] }
+anyhow = { version="1.0" }
+serde_json = { version="1.0" }
+pathfinding = "^2"

@@ -208,7 +208,7 @@ pub fn process_loaded_tile_maps(
 pub struct LdtkPlugin;
 
 impl Plugin for LdtkPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app
             .add_asset::<LdtkMap>()
             .add_asset_loader(LdtkLoader)
