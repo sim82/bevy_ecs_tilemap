@@ -14,6 +14,8 @@ struct Ferris {
     keys: [bool; 3],
 }
 
+struct EndPos(UVec2);
+
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
 
@@ -100,9 +102,8 @@ fn init_ferris(
         let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(16.0, 16.0), 10, 1);
         let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-        let solution = solve(&mut map_query, &start_pos, &end_pos, &tile_query);
         let mut timer = Timer::from_seconds(0.2, true);
-        timer.pause();
+        // timer.pause();
 
         commands
             .entity(entity)
@@ -115,7 +116,8 @@ fn init_ferris(
                 ..Default::default()
             })
             .insert(desc)
-            .insert(solution)
+            //            .insert(solution)
+            .insert(EndPos(end_pos))
             .insert(timer);
         ferris.pos = start_pos;
         // commands.entity(entity).insert_bundle
@@ -124,14 +126,10 @@ fn init_ferris(
 
 fn solve(
     map_query: &mut MapQuery,
-    start_pos: &UVec2,
+    start_state: Ferris,
     end_pos: &UVec2,
     query: &Query<(&Tile, &UVec2)>,
 ) -> VecDeque<Ferris> {
-    let start_state = Ferris {
-        pos: *start_pos,
-        keys: [false; 3],
-    };
     let successors = |state: &Ferris| {
         let neigbors = map_query.get_tile_neighbors(state.pos, 0u16, 0u16);
 
@@ -181,11 +179,11 @@ fn solve(
 fn character_input(
     mut commands: Commands,
     keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Ferris, &mut Timer)>,
-    tile_query: Query<(Entity, &Tile)>,
+    mut query: Query<(Entity, &mut Ferris, &mut Timer, &EndPos)>,
+    tile_query: Query<(&Tile, &UVec2)>,
     mut map_query: MapQuery,
 ) {
-    for (mut ferris, mut timer) in query.iter_mut() {
+    for (ferris_entity, mut ferris, mut timer, end_pos) in query.iter_mut() {
         let mut new_x = ferris.pos.x as i32;
         let mut new_y = ferris.pos.y as i32;
         for key_code in keyboard_input.get_just_pressed() {
@@ -194,7 +192,11 @@ fn character_input(
                 KeyCode::Down => new_y -= 1,
                 KeyCode::Left => new_x -= 1,
                 KeyCode::Right => new_x += 1,
-                KeyCode::R => timer.unpause(),
+                KeyCode::R => {
+                    let solution = solve(&mut map_query, ferris.clone(), &end_pos.0, &tile_query);
+
+                    commands.entity(ferris_entity).insert(solution);
+                }
                 _ => (),
             }
         }
@@ -205,7 +207,7 @@ fn character_input(
         let mut despawn = false;
         let new_pos = UVec2::new(new_x as u32, new_y as u32);
         if let Ok(tile_ent) = map_query.get_tile_entity(new_pos, 0u16, 0u16) {
-            if let Ok((_, tile)) = tile_query.get(tile_ent) {
+            if let Ok((tile, _)) = tile_query.get(tile_ent) {
                 if (5..=7).contains(&tile.texture_index) {
                     ferris.keys[(tile.texture_index - 5) as usize] = true;
                     despawn = true;
