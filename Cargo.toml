@@ -27,4 +27,4 @@ tiled = { version="0.9", default-features=false, optional=true }
 [dev-dependencies]
 bevy = { git="https://github.com/bevyengine/bevy", branch ="main", default-features=true }
 rand = "0.8"
-env_logger = "0.8"
+env_logger = "0.9"
